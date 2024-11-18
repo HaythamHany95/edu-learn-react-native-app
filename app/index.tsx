@@ -1,11 +1,12 @@
 import { View, Text } from 'react-native'
-import React from 'react'
+import React, { useRef } from 'react'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import Button from '@/components/Button'
 import { router } from 'expo-router'
 import LottieView from 'lottie-react-native';
 
 const Welcome = () => {
+   const animation = useRef<LottieView>(null)
    return (
 
       <View className='flex-1 items-center justify-center w-full gap-4 p-4 bg-white'>
@@ -16,6 +17,7 @@ const Welcome = () => {
             entering={FadeInDown.duration(300).springify()}
          >
             <LottieView
+               ref={animation}
                source={require('../assets/animations/lottie.json')} autoPlay loop style={{ height: 300, width: 300 }} />
          </Animated.View>
          {/* Big Text */}
