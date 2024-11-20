@@ -1,15 +1,33 @@
 import { HelloWave } from "@/components/HelloWave";
-import { View, Text, Pressable, ScrollView } from "react-native";
+import { View, Text, Pressable, ScrollView, ActivityIndicator, FlatList } from "react-native";
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { router } from "expo-router";
 import { useState } from "react";
+import axios from "axios";
+import { password, username } from "@/utils/api-keys";
+import { useQuery } from "@tanstack/react-query";
+
+import CourseItem from "@/components/CourseItem";
 
 interface Category {
   id: string;
   name: string;
   icon: string;
 }
+interface SearchResponse {
+  results: Course[]
+}
+interface Course {
+  id: number;
+  title: string;
+  subtitle: string;
+  image_480x270: string;
+  is_paid: boolean;
+  price: string;
+  num_reviews: number;
+}
+
 
 const categories: Category[] = [
   {
@@ -49,19 +67,42 @@ const categories: Category[] = [
   }
 ];
 
+const fetchCourses = async (searchQuery: string): Promise<SearchResponse> => {
+  const response = await axios.get(`https://www.udemy.com/api-2.0/courses/`,
+    {
+      params: {
+        search: searchQuery
+      },
+      auth: {
+        username: username,
+        password: password
+      }
+    }
+  );
+  return response.data
+
+
+}
+
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('business');
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ['searchQuery', selectedCategory],
+    queryFn: () => fetchCourses(selectedCategory),
+    enabled: true
+  })
+  console.log(data)
 
   const renderCategory = (category: Category) => (
     <Pressable
       key={category.id}
       onPress={() => setSelectedCategory(category.id)}
-      className="flex-col items-center rounded-full mr-4 gap-4"
+      className="flex-col items-center rounded-full mr-4 mt-2 gap-2 p-2 "
     >
-      <View key={category.id} className={`flex-row items-center rounded-full p-4 ${selectedCategory === category.id ? 'border border-blue-600' : 'border-2 border-gray-200'}`} >
+      <View key={category.id} className={`flex-row items-center rounded-full p-4 ${selectedCategory === category.id ? 'border-2 border-blue-600' : 'border-2 border-gray-200'}`} >
         <Ionicons name={category.icon as any} size={24} color={selectedCategory === category.id ? 'blue' : 'gray'} />
       </View>
-      <Text className={`${selectedCategory === category.id ? 'text-blue-600' : 'text-gray-500'}`}>{category.name}</Text>
+      <Text className={`${selectedCategory === category.id ? 'text-blue-600' : 'text-gray-500'}`} style={{ fontFamily: selectedCategory === category.id ? 'BarlowBold' : 'BarlowMedium' }}>{category.name}</Text>
     </Pressable>
   );
 
@@ -97,6 +138,49 @@ export default function HomeScreen() {
             {categories.map((category) => renderCategory(category))}
           </ScrollView>
         </Animated.View>
+
+
+        {
+          //* IF WE ARE LOADING ⌛
+          isLoading ? (
+            <View className="flex-1 items-center justify-center mt-10">
+              <ActivityIndicator color="blue" size="large" />
+            </View>
+
+            //* IF THERE IS AN ERROR ❌
+          ) : error ? (
+            <View>
+              <Text> Error: {(error as Error).message}</Text>
+            </View>
+
+
+            //*  IF WE HAVE DATA ✅🔋
+          ) : data?.results ? (
+            <FlatList
+              className="flex-row  gap-5 "
+              horizontal={true}
+              data={data.results}
+              renderItem={({ item }) => (
+                <CourseItem
+                  index={item.id}
+                  course={item}
+                  customStyle="w-[22rem] pl-6 mt-10"
+                />
+              )}
+              keyExtractor={(item) => item.id.toString()}
+              showsHorizontalScrollIndicator={false} />
+
+
+          ) :
+            // IF THERE IS NO DATA 🪫
+            (
+              <View className="flex-1 items-center justify-center">
+                <Text>No results found</Text>
+              </View>
+            )
+        }
+
+
       </ScrollView>
     </View>
   );
