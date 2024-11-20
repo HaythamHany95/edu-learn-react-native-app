@@ -17,11 +17,12 @@ const CourseItem = ({ course, index, customStyle }: CourseItemProps) => {
          >
             <View >
                <Image
+                  resizeMode='stretch'
                   source={{ uri: course.image_480x270 }}
                   className=" w-full h-40 "
                />
             </View>
-            <View className='flex-col p-2'>
+            <View className='flex-col p-2 h-24'>
                <Text>{course.title}</Text>
                <View className='flex-row pt-2 items-center justify-between' >
 
