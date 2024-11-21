@@ -164,7 +164,7 @@ export default function HomeScreen() {
                 <CourseItem
                   index={item.id}
                   course={item}
-                  customStyle="w-[22rem] pl-6 mt-10"
+                  customStyle="w-[22rem] pl-6 mt-10 "
                 />
               )}
               keyExtractor={(item) => item.id.toString()}
