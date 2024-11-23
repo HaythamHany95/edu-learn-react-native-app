@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: HEADER_HEIGHT,
+    height: 350,
     overflow: 'hidden',
   },
   content: {
@@ -77,5 +77,9 @@ const styles = StyleSheet.create({
     padding: 32,
     gap: 16,
     overflow: 'hidden',
+    paddingTop: HEADER_HEIGHT / 10,
+    marginTop: -HEADER_HEIGHT / 2,
+    borderTopRightRadius: 24,
+    borderTopLeftRadius: 24,
   },
 });

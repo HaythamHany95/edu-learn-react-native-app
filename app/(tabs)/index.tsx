@@ -7,26 +7,8 @@ import { useState } from "react";
 import axios from "axios";
 import { password, username } from "@/utils/api-keys";
 import { useQuery } from "@tanstack/react-query";
-
 import CourseItem from "@/components/CourseItem";
-
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-}
-interface SearchResponse {
-  results: Course[]
-}
-interface Course {
-  id: number;
-  title: string;
-  subtitle: string;
-  image_480x270: string;
-  is_paid: boolean;
-  price: string;
-  num_reviews: number;
-}
+import { CoursesResponse, Category, } from "@/types/types";
 
 
 const categories: Category[] = [
@@ -67,7 +49,7 @@ const categories: Category[] = [
   }
 ];
 
-const fetchCourses = async (searchQuery: string): Promise<SearchResponse> => {
+const fetchCategoryCourses = async (searchQuery: string): Promise<CoursesResponse> => {
   const response = await axios.get(`https://www.udemy.com/api-2.0/courses/`,
     {
       params: {
@@ -80,18 +62,32 @@ const fetchCourses = async (searchQuery: string): Promise<SearchResponse> => {
     }
   );
   return response.data
+}
 
+const fetchRecommendedCourses = async (): Promise<CoursesResponse> => {
 
+  const response = await axios(`https://www.udemy.com/api-2.0/courses/`, {
+    auth: {
+      username: username,
+      password: password
+    }
+  }
+  );
+  return response.data
 }
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('business');
-  const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['searchQuery', selectedCategory],
-    queryFn: () => fetchCourses(selectedCategory),
+  const { data: categoryCoursesSucces, error: categoryCoursesError, isLoading: categoryCoursesLoading, refetch } = useQuery({
+    queryKey: ['selected_category', selectedCategory],
+    queryFn: () => fetchCategoryCourses(selectedCategory),
     enabled: true
   })
-  console.log(data)
+
+  const { data: recommendedCoursesSucces, error: recommendedCoursesError, isLoading: recommendedCoursesLoading } = useQuery({
+    queryKey: ['recommended_courses'],
+    queryFn: () => fetchRecommendedCourses()
+  })
 
   const renderCategory = (category: Category) => (
     <Pressable
@@ -105,7 +101,9 @@ export default function HomeScreen() {
       <Text className={`${selectedCategory === category.id ? 'text-blue-600' : 'text-gray-500'}`} style={{ fontFamily: selectedCategory === category.id ? 'BarlowBold' : 'BarlowMedium' }}>{category.name}</Text>
     </Pressable>
   );
-
+  console.log('Recommended Courses:' + recommendedCoursesSucces?.results);
+  console.log('===============================================');
+  console.log('Category Courses:' + categoryCoursesSucces?.results);
   return (
     <View className="flex-1 bg-white">
       <View className="bg-blue-600 pt-16 pb-6 px-6">
@@ -142,29 +140,29 @@ export default function HomeScreen() {
 
         {
           //* IF WE ARE LOADING ⌛
-          isLoading ? (
+          categoryCoursesLoading ? (
             <View className="flex-1 items-center justify-center mt-10">
               <ActivityIndicator color="blue" size="large" />
             </View>
 
             //* IF THERE IS AN ERROR ❌
-          ) : error ? (
+          ) : categoryCoursesError ? (
             <View>
-              <Text> Error: {(error as Error).message}</Text>
+              <Text> Error: {(categoryCoursesError as Error).message}</Text>
             </View>
 
 
             //*  IF WE HAVE DATA ✅🔋
-          ) : data?.results ? (
+          ) : categoryCoursesSucces?.results ? (
             <FlatList
               className="flex-row  gap-5 "
               horizontal={true}
-              data={data.results}
+              data={categoryCoursesSucces.results}
               renderItem={({ item }) => (
                 <CourseItem
                   index={item.id}
                   course={item}
-                  customStyle="w-[22rem] pl-6 mt-10 "
+                  customStyle="w-[22rem] pl-6 mt-2 "
                 />
               )}
               keyExtractor={(item) => item.id.toString()}
@@ -179,7 +177,49 @@ export default function HomeScreen() {
               </View>
             )
         }
+        <View className="flex-row bg-white mt-5 px-5 py-2 justify-between items-center">
+          <Text className="text-xl" style={{ fontFamily: 'BarlowBold' }}>Recommended</Text>
+          <Text className="text-blue-600" style={{ fontFamily: 'BarlowBold' }}>See More</Text>
+        </View>
+        {
+          //* IF WE ARE LOADING ⌛
+          recommendedCoursesLoading ? (
+            <View className="flex-1 items-center justify-center mt-10">
+              <ActivityIndicator color="blue" size="large" />
+            </View>
 
+            //* IF THERE IS AN ERROR ❌
+          ) : recommendedCoursesError ? (
+            <View>
+              <Text> Error: {(recommendedCoursesError as Error).message}</Text>
+            </View>
+
+
+            //*  IF WE HAVE DATA ✅🔋
+          ) : recommendedCoursesSucces?.results && recommendedCoursesSucces?.results?.length !== 0 ? (
+            <FlatList
+              className="flex-row  gap-5 "
+              horizontal={true}
+              data={recommendedCoursesSucces?.results}
+              renderItem={({ item }) => (
+                <CourseItem
+                  index={item.id}
+                  course={item}
+                  customStyle="w-[22rem] pl-6 mt-2 "
+                />
+              )}
+              keyExtractor={(item) => item.id.toString()}
+              showsHorizontalScrollIndicator={false} />
+
+
+          ) :
+            // IF THERE IS NO DATA 🪫
+            (
+              <View className="flex-1  mt-5 items-center justify-center">
+                <Text className="text-xl" style={{ fontFamily: 'BarlowSemiBold' }}>No Recommeded Courses Now</Text>
+              </View>
+            )
+        }
 
       </ScrollView>
     </View>

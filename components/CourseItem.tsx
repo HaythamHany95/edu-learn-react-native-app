@@ -5,6 +5,7 @@ import React from 'react'
 import { Ionicons } from '@expo/vector-icons';
 import { Course } from '@/types/types';
 import { useWishListStore } from '@/store/WishListStore';
+import { router } from 'expo-router';
 
 interface CourseItemProps {
    course: Course;
@@ -26,7 +27,9 @@ const CourseItem = ({ course, index, customStyle }: CourseItemProps) => {
    }
    //-----------------------------------------------
    return (
-      <Pressable className={'pt-4  flex-col ' + (customStyle ? customStyle : '')} >
+      <Pressable
+         onPress={() => { router.push({ pathname: '/course-details', params: { courseId: course.id } }) }}
+         className={'pt-4  flex-col ' + (customStyle ? customStyle : '')} >
          <Animated.View className={' gap-2 w-full border border-gray-200 rounded-2xl overflow-hidden'}
             entering={FadeInDown.delay(100).duration(index * 300).springify()}
          >
